@@ -3,5 +3,3 @@ jsonify
 werkzeug
 MySQL
 datetime
-timedelta
-functools
