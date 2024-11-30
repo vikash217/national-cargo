@@ -1,5 +1,6 @@
 flask
 jsonify
 werkzeug
-MySQL
+psycopg2
+mysql
 datetime
