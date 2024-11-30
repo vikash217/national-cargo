@@ -3,3 +3,4 @@ jsonify
 werkzeug
 psycopg2
 datetime
+flask_cors
