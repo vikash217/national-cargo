@@ -4,3 +4,4 @@ werkzeug
 psycopg2
 datetime
 flask_cors
+gunicorn
