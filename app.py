@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-import mysql.connector
-from mysql.connector import Error
+import psycopg2
+from psycopg2 import Error
 from datetime import datetime, timedelta
 from functools import wraps
 import json
@@ -16,11 +16,8 @@ app.config['SECRET_KEY'] = 'abc123'
 def create_connection():
     connection = None
     try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            user='root',
-            password='root',
-            database='labour'
+        connection = psycopg2.connect(
+            "postgresql://app_o4eo_user:a6tFm2XGRJUCFJu66WU3QH01brunxfMj@dpg-ct5gpfbqf0us7386tr3g-a.oregon-postgres.render.com/app_o4eo"
         )
     except Error as e:
         print(f"The error '{e}' occurred")
@@ -38,11 +35,11 @@ def get_labours():
     if connection is None:
         return jsonify({"error": "Database connection failed"}), 500
     try:
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
         query = "SELECT * FROM labours"
         cursor.execute(query)
         labours = cursor.fetchall()
-        return jsonify(labours), 200
+        return jsonify([dict(labour) for labour in labours]), 200
     except Error as e:
         return jsonify({"error": str(e)}), 400
     finally:
@@ -106,11 +103,11 @@ def get_sites():
     if connection is None:
         return jsonify({"error": "Database connection failed"}), 500
     try:
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
         query = "SELECT * FROM sites"
         cursor.execute(query)
         sites = cursor.fetchall()
-        return jsonify(sites), 200
+        return jsonify([dict(site) for site in sites]), 200
     except Error as e:
         return jsonify({"error": str(e)}), 400
     finally:
@@ -130,7 +127,7 @@ def add_group():
         if not id or not name:
             return jsonify({"error": "ID and name are required"}), 400
         
-        query = "INSERT INTO `groups` (id, name) VALUES (%s, %s)"
+        query = 'INSERT INTO "groups" (id, name) VALUES (%s, %s)'
         cursor.execute(query, (id, name))
         connection.commit()
         return jsonify({"id": id, "name": name}), 201
@@ -215,7 +212,7 @@ def signup():
                 "message": "Database connection failed"
             }), 500
             
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
         
         # Check if user already exists
         cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
@@ -283,7 +280,7 @@ def login():
                 "message": "Database connection failed"
             }), 500
             
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
         query = "SELECT * FROM users WHERE email = %s"
         cursor.execute(query, (email,))
         user = cursor.fetchone()
@@ -328,7 +325,7 @@ def get_user_info():
             user_id = token.split(':')[0]
             
             connection = create_connection()
-            cursor = connection.cursor(dictionary=True)
+            cursor = connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
             query = "SELECT id, email FROM users WHERE id = %s"
             cursor.execute(query, (user_id,))
             user = cursor.fetchone()
